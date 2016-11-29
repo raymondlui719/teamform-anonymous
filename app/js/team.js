@@ -93,7 +93,7 @@ angular.module('teamform-team-app', ['firebase'])
 	$scope.retrieveNameFromID = function(id) {
 		return getUserName(id, $scope.users);
 	};
-
+	$scope.abilityList =["Java","C++","Python","HTML","Chinese"];
 	$scope.retrieveTagsFromID = function(id) {
 		var tags = [];
 		for(var tmpIdx = 0; tmpIdx < $scope.users.length; tmpIdx++) {
@@ -291,17 +291,22 @@ angular.module('teamform-team-app', ['firebase'])
 	//tagsfunctions
 	$scope.searchTags = [];
 	$scope.filterByTag =function(memTag){
+		var tagFound = false;
 		if ($scope.searchTags.length == 0){return true;}
+		if (memTag == null){return false;}
 		var length = (typeof memTag != "undefined")? memTag.length: 0;
 		var slength = (typeof $scope.searchTags != "undefined")? $scope.searchTags.length: 0;
 		for (var i=0;i<slength;i++){
+			tagFound = false;
 			for (var j=0; j<length;j++){
 				if(memTag[j] == $scope.searchTags[i]){
-					return true;
+					tagFound = true;
+					break;
 				}
 			}
+			if(!tagFound){return false;}
 		}
-		return false;
+		return tagFound;
 	}
 	$scope.addSearchTags = function(tagval){
 		var addOrNot = true;
@@ -315,7 +320,6 @@ angular.module('teamform-team-app', ['firebase'])
 		}
 		if(addOrNot){
 			$scope.searchTags.push(tagval);
-			var div = document.getElementById("filterMember");
 		}
 		else{
 			$scope.searchTags.splice(k,1);
@@ -447,9 +451,9 @@ angular.module('teamform-team-app', ['firebase'])
 				break;
 			}
 		}
-		if(memberInfo === undefined 
-			|| memberInfo.inTeam !== undefined
-			|| memberInfo.invitedBy.indexOf($scope.param.teamName) != -1) return false;
+		if(typeof memberInfo === "undefined"
+			|| typeof memberInfo.inTeam !== "undefined"
+			|| (typeof memberInfo.invitedBy !== "undefined" && memberInfo.invitedBy.indexOf($scope.param.teamName) !== -1)) return false;
 		return true;
 	};
 	

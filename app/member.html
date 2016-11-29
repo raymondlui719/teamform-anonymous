@@ -127,7 +127,7 @@
                     <h5>{{category.$id}}</h5>
                     <div id= {{category.$id}} class="dropdown-tags">
                       <div ng-repeat ="tt in category">
-                        <label><input type="checkbox"  ng-click="addSearchTags(tt);">
+                        <label><input type="checkbox"  ng-checked="searchTagCheck(tt);" ng-click="addSearchTags(tt);">
                         <span>{{tt}}</span>
                         </label>
                       </div>

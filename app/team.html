@@ -158,28 +158,16 @@
         <h3>All members:</h3>
         <div class="row">
           <div class="col-xs-offset-1 col-sm-offset-2 col-xs-6 col-sm-4 text-left">
-            <button ng-click="openCategory('dropdownCategory1');" class="dropbtn">Search member by Tags</button>
+            <button ng-click="openCategory('dropdownCategory1');" class="dropbtn">Search member by Abilities</button>
             <div id="dropdownCategory1" class="dropdown-content">
-              <div ng-repeat="category in tags" ng-click = "openCategory(category.$id+1000);" class="dropdown-text" >
-                <u1>{{category.$id}}</u1>
-                <div id= {{category.$id+1000}} class="dropdown-tags">
-                  <div ng-repeat ="tt in category">
-                    <label><input type="checkbox"  ng-click="addSearchTags(tt);">
-                      <span>{{tt}}</span>
-                    </label>
-                  </div>
-                </div>
+              <div ng-repeat="category in abilityList"  class="dropdown-text" >
+               <label><input type="checkbox"  ng-click="addSearchTags(category);">
+                <span>{{category}}</span>
+               </label>
               </div>
              </div>
           </div>
-          <div class="col-xs-offset-1 col-sm-offset-1 col-xs-6 col-sm-4 text-left">
-            <span ng-repeat="ttt in searchTags">
-              <button type="button" class="btn btn-default btn-xs pull-left" ng-click="addSearchTags(ttt);" style="text-align: left;">
-                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                {{ttt}}
-              </button>
-            </span>
-          </div>
+          
         </div>
 
         <div class="row">
@@ -188,14 +176,14 @@
               <thead>
                 <tr>
                   <td class="col-md-2">Name</td>
-                  <td class="col-md-2">Tags</td>
+                  <td class="col-md-2">Abilities</td>
                   <td class="col-md-1">Weight</td>
                   <td class="col-md-2">In team</td>
                   <td class="col-md-1"></td>
                 </tr>
               </thead>
               <tbody>
-                <tr ng-repeat="m in member" ng-show = "filterByTag(m.tags);">
+                <tr ng-repeat="m in member" ng-show = "filterByTag(retrieveTagsFromID(m.$id));">
                   <td class="col-md-2"><a href="profile.html?q={{m.$id}}">{{retrieveNameFromID(m.$id)}}</a></td>
                   <td class="col-md-2">
                     <div ng-repeat="tag in retrieveTagsFromID(m.$id)">

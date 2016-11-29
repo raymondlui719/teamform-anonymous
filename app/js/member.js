@@ -114,14 +114,27 @@ angular.module('teamform-member-app', ['firebase'])
 		document.getElementById(dVal).classList.toggle("show");
 	};	
 	$scope.filterByTag =function(teamTag){
+		var tagFound = false;
 		if ($scope.searchTags.length == 0){return true;}
 		var length = (typeof teamTag != "undefined")? teamTag.length: 0;
 		var slength = (typeof $scope.searchTags != "undefined")? $scope.searchTags.length: 0;
 		for (var i=0;i<slength;i++){
+			tagFound = false;
 			for (var j=0; j<length;j++){
 				if(teamTag[j] == $scope.searchTags[i]){
-					return true;
+					tagFound = true;
+					break;
 				}
+			}
+			if(!tagFound){return false;}
+		}
+		return tagFound;
+	}
+	$scope.searchTagCheck = function(tval){
+		var length = (typeof $scope.searchTags != "undefined")? $scope.searchTags.length: 0;
+		for(var j =0; j < length; j++){
+			if(tval == $scope.searchTags[j]) {
+				return true;
 			}
 		}
 		return false;

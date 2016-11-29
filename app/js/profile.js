@@ -30,12 +30,12 @@ angular.module('teamform-profile-app', ['firebase'])
 	
 	$scope.queue = [];
 	$scope.loadCallback = function() {
-		$scope.joinedEvent = $firebaseArray(firebase.database().ref("user/" + $scope.lookForId + "/joinedEvent"));
+		$scope.joinedEvent = $firebaseArray(firebase.database().ref().child("user").child($scope.lookForId).child("joinedEvent"));
 		$scope.joinedEvent.$loaded(function(eventList) {
 			angular.forEach(eventList, function(event) {
 				var info = {};
 				info.eventId = event.$value;
-				var memberInfo = $firebaseObject(firebase.database().ref(event.$value + "/member" + $scope.lookForId));
+				var memberInfo = $firebaseObject(firebase.database().ref().child(event.$value).child("member").child($scope.lookForId));
 				memberInfo.$loaded().then(function() {
 					console.log("Then2");
 					info.inTeam = memberInfo.inTeam;
