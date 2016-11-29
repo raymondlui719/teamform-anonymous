@@ -16,7 +16,8 @@ angular.module('teamform-taglist-app', ['firebase'])
 			$scope.userId = firebase.auth().currentUser.uid;
 			$scope.loadCallback();
 		} else {
-    		window.location.href= "index.html" ;
+			document.getElementById('login-form').style.display='block';
+    		//window.location.href= "index.html" ;
 		}
 	});
 	

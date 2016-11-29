@@ -72,69 +72,136 @@
               <button><span class="glyphicon glyphicon-plus" ng-click="changeMaxTeamSize(1);"></span></button>
               <button><span class="glyphicon glyphicon-minus" ng-click="changeMaxTeamSize(-1);"></span></button>
               <br></br>
-              <button type="button" class="btn btn-primary" ng-disabled="!willEnableSmartAssignment()" ng-click="smartAssignment();" >Smart Assignment</button>
+              <button type="button" class="btn btn-primary" ng-disabled="!willEnableSmartAssignment()" ng-click="usingAssignPanel=!usingAssignPanel" >Smart Assignment</button>
               <button type="button" class="btn btn-primary" ng-click="terminateEvent();" >Terminate</button>
             </div>
           <div class="col-md-2 col-xs-2"></div>
         </div>
-        <div class="row">
-          <div class="col-md-2 col-xs-2"></div>   
-          	<div class="col-md-8 col-xs-8 text-left panel">  
-				<h3>All teams:</h3>
-           		<table class="table">
-		           	<thead>
-		           		<tr>
-		           			<td>Team name</td>
-		           			<td>Size</td>
-		           			<td>Total Weight</td>
-		           		</tr>
-		           	</thead>
-		           	<tbody ng-repeat="t in team">
-		           	  <tr>
-		           	    <td>
-		           	      <p>
-		           	        <button class="btn btn-info" ng-if="t.expanded" ng-click="t.expanded = false">-</button>
-		           	        <button class="btn btn-info" ng-if="!t.expanded" ng-click="t.expanded = true">+</button>
-		           	        {{t.$id}}
-		           	      </p>
-		           	    </td>
-		           	    <td>{{t.teamMembers.length + "/"+ t.size}}</td>
-		           	    <td>{{getTotalWeight(t.teamMembers)}}</td>
-		           	  </tr>
-		           	  <tr ng-if="t.expanded" ng-repeat-end="">
-		           	    <td>#</td>
-		           	    <td>Member name</td>
-		           	    <td>Weight</td>
-		           	  </tr>
-		           	  <tr ng-if="t.expanded" ng-repeat="tm in t.teamMembers track by $index">
-		           	    <td>{{$index + 1}}</td>
-		           	    <td>{{getMemberName(tm)}}</td>
-		           	    <td>{{getMemberWeight(tm)}}</td>
-		           	  </tr>
-					</tbody>
-					<tbody>
-						<tr>
-							<td colspan="3">
-								<p>
-									<input class="btn btn-info" type="submit" value="-" ng-if="expanded" ng-click="setExpanded()"></input>
-									<input class="btn btn-info" type="submit" value="+" ng-if="!expanded" ng-click="setExpanded()"></input>
-									Users with no team
-								</p>
-							</td>
-						</tr>
-						<tr ng-if="expanded">
-							<td>#</td>
-							<td>User name</td>
-							<td>Request to</td>
-						</tr>
-						<tr ng-if="expanded" ng-repeat="mem in member | filter: {inTeam: '!'}">
-							<td>{{$index + 1}}</td>
-							<td>{{getMemberName(mem.$id)}}</td>
-							<td>{{mem.selection}}</td>
-						</tr>
-					</tbody>
-				</table>
-        	</div>    
+        <div class="row" id="assignment-panel" ng-if="usingAssignPanel">
+          <div class="col-md-2 col-xs-2"></div>
+            <div class="col-md-8 col-xs-8 text-left panel">
+                <div class="modal-body">
+                  <div class="row">
+                    <div class="col-md-6 col-xs-6">
+                      <button ng-click="openCategory('dropdownCategory')" class="dropbtn">Set tag for assignment</button>
+                      <div id="dropdownCategory" class="dropdown-content">
+                        <div ng-repeat="category in tags" ng-click="openCategory(category.$id)" class="dropdown-text" >
+                          <h5>{{category.$id}}</h5>
+                          <div id= {{category.$id}} class="dropdown-tags">
+                            <div ng-repeat ="tt in category">
+                              <label><input type="checkbox" ng-click="addTags(tt)">{{tt}}</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <br>
+                  <div class="row" ng-repeat="tag in selectedTags">
+                    <div class="col-md-1 col-xs-1"></div>
+                    <div class="col-md-4 col-xs-4">
+                      <div>
+                        <button type="button" class="btn btn-default col-xs-12"ng-click="addTags(tag.name);" style="text-align: left;">
+                          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{tag.name}}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-md-4 col-xs-4" novalidate>
+                      <input type="number" class="form-control" id="changeWeight" placeholder="weight" ng-model="tag.weight" >
+                    </div>
+                  </div>
+                  
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-info" ng-click="selectAverageTag()">Average weighted tags</button>
+                  <button type="button" data-dismiss="modal" class="btn btn-primary" ng-disabled="!willEnableSmartAssignment()" ng-click="smartAssignment()">Assign</button>
+                  <button type="button" data-dismiss="modal" class="btn btn-primary" ng-click="showHideAssignPanel()">Cancel</button>
+                </div>
+            </div>
+          <div class="col-md-2 col-xs-2"></div>    
+        </div>
+        
+        <div class="row"> 
+            <div class="col-xs-offset-1 col-sm-offset-2 col-md-8 col-xs-10 text-left">  
+        <h3>All teams:</h3>
+               <table class="table">
+                 <thead>
+                   <tr>
+                     <td class="col-md-2">Team name</td>
+                     <td class="col-md-1">Size</td>
+                     <td class="col-md-2">Tags</td>
+                     <td class="col-md-2" colspan="2" ng-if="usingAssignPanel">Total Weight</td>
+                   </tr>
+                 </thead>
+                 <tbody ng-repeat="t in team">
+                   <tr>
+                     <td class="col-md-2">
+                       <p>
+                         <button class="btn btn-info" ng-if="t.expanded" ng-click="t.expanded = false">-</button>
+                         <button class="btn btn-info" ng-if="!t.expanded" ng-click="t.expanded = true">+</button>
+                         {{t.$id}}
+                       </p>
+                     </td>
+                     <td class="col-md-1">{{t.teamMembers.length + "/"+ t.size}}</td>
+                     <td class="col-md-2">
+                       <button type="button" class="btn btn-default btn-xs pull-left" ng-repeat="tag in t.tags track by $index">
+                         <span class="badge">{{t.weight[$index]}}</span> {{tag}}
+                       </button>
+                     </td>
+                     <td class="col-md-2" ng-if="usingAssignPanel">{{getTotalWeight(t.teamMembers)}}</td>
+                   </tr>
+                   <tr ng-if="t.expanded" style="background-color: #f9f9f9" ng-repeat-end="">
+                     <td></td>
+                     <td>#</td>
+                     <td colspan="{{usingAssignPanel? 1: 2}}" >Member name</td>
+                     <td colspan="2" ng-if="usingAssignPanel">Weight</td>
+                   </tr>
+                   <tr ng-if="t.expanded" style="background-color: #f9f9f9" ng-repeat="tm in t.teamMembers track by $index">
+                     <td></td>
+                     <td>{{$index + 1}}</td>
+                     <td colspan="{{usingAssignPanel? 1: 2}}" >{{getMemberName(tm)}}</td>
+                     <td colspan="2" ng-if="usingAssignPanel">
+                         {{calculateMemberWeightWithTags(tm, selectedTags)}}
+                       <div ng-repeat="tag in getUserAbilityWithTags(tm, selectedTags)">
+                         <button type="button" class="btn btn-default btn-xs pull-left">
+                           <span class="badge">{{tag.weight}}</span> {{tag.name}}
+                         </button>
+                       </div>
+                     </td>
+                   </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td colspan="3">
+                <p>
+                  <input class="btn btn-info" type="submit" value="-" ng-if="expanded" ng-click="setExpanded()"></input>
+                  <input class="btn btn-info" type="submit" value="+" ng-if="!expanded" ng-click="setExpanded()"></input>
+                  Users with no team
+                </p>
+              </td>
+            </tr>
+            <tr ng-if="expanded" style="background-color: #f9f9f9" >
+              <td>#</td>
+              <td>User name</td>
+              <td>Request to</td>
+              <td ng-if="usingAssignPanel">Weight</td>
+            </tr>
+            <tr ng-if="expanded" style="background-color: #f9f9f9" ng-repeat="mem in member | filter: {inTeam: '!'}">
+              <td>{{$index + 1}}</td>
+              <td>{{getMemberName(mem.$id)}}</td>
+              <td>{{mem.selection}}</td>
+              <td ng-if="usingAssignPanel">
+                {{calculateMemberWeightWithTags(mem.$id, selectedTags)}}
+                <div ng-repeat="tag in getUserAbilityWithTags(mem.$id, selectedTags)">
+                  <button type="button" class="btn btn-default btn-xs pull-left">
+                    <span class="badge">{{tag.weight}}</span> {{tag.name}}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+          </div>    
         </div>
       </div>
     </div>

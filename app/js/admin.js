@@ -21,10 +21,7 @@ angular.module('teamform-admin-app', ['firebase'])
     };
 })
 .controller('AdminCtrl', ['$scope', '$firebaseObject', '$firebaseArray', function($scope, $firebaseObject, $firebaseArray) {
-	
-	// TODO: implementation of AdminCtrl
-	
-	// Initialize $scope.param as an empty JSON object
+
 	$scope.param = {};
 	$scope.event = "";
 	$scope.joinedEvent = [];
@@ -55,8 +52,9 @@ angular.module('teamform-admin-app', ['firebase'])
 			});
 		}
 	});
-		
-	// Link and sync a firebase object	
+	
+	$scope.usingAssignPanel = false;
+	
 	$scope.param = $firebaseObject(ref);
 	$scope.paramTest = "";
 	$scope.paramLoadedCallback = function() {
@@ -111,11 +109,118 @@ angular.module('teamform-admin-app', ['firebase'])
 		});
 	});
 
+	$scope.tags = $firebaseArray(firebase.database().ref("newTags"));
+
 	
 	$scope.expanded = false;
 	$scope.setExpanded = function() {
 		$scope.expanded = !$scope.expanded;
 	};
+	$scope.openCategory = function(id) {
+		document.getElementById(id).classList.toggle('show');
+	};
+	$scope.tagsChecked = [];
+	$scope.selectedTags = [];
+	$scope.addTags = function(tname) {
+		console.log("Called once", tname);
+		console.log("Current selected: ", $scope.selectedTags);
+		for(var idx = 0; idx < $scope.selectedTags.length; idx++) {
+			if($scope.selectedTags[idx].name == tname) {
+				$scope.selectedTags.splice(idx, 1);
+				return;
+			}
+		}
+		$scope.selectedTags.push({name: tname, weight: 0});
+	}
+	$scope.isTagChecked = function(tagval){
+		var length = (typeof $scope.param.tags != "undefined")? $scope.param.tags.length: 0;
+		for(var j =0; j < length; j++){
+			if(tagval == $scope.param.tags[j]) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
+	$scope.calculateMemberWeightWithTags = function(memId, tags) {
+		var userInfo;
+		for(var idx = 0; idx < $scope.users.length; idx++) {
+			if($scope.users[idx].$id == memId) {
+				userInfo = $scope.users[idx];
+				break;
+			}
+		}
+
+		if(userInfo.ability === undefined) return 0;
+		var sum = 0;
+		for(var idx = 0; idx < tags.length; idx++) {
+			var tag = tags[idx];
+			angular.forEach(userInfo.ability, function(ability, abilityName) {
+				if(abilityName.toLowerCase() == tag.name.toLowerCase()) {
+					sum += Math.round(ability.marks / 100 * tag.weight);
+					return;
+				}
+			});
+		}
+		return sum;
+	};
+
+	$scope.abilities = [];
+	$scope.getUserAbilityWithTags = function(memId, tags) {
+		$scope.abilities = [];
+		var userInfo;
+		for(var idx = 0; idx < $scope.users.length; idx++) {
+			if($scope.users[idx].$id == memId) {
+				userInfo = $scope.users[idx];
+				break;
+			}
+		}
+
+		if(userInfo.ability === undefined) return 0;
+		var sum = 0;
+		for(var idx = 0; idx < tags.length; idx++) {
+			var tag = tags[idx];
+			angular.forEach(userInfo.ability, function(ability, abilityName) {
+				if(abilityName.toLowerCase() == tag.name.toLowerCase()) {
+					$scope.abilities.push({name: abilityName, weight: Math.round(ability.marks / 100 * tag.weight)});
+					return;
+				}
+			});
+		}
+		return $scope.abilities;
+	};
+	
+	$scope.showHideAssignPanel = function() {
+		$scope.usingAssignPanel = !$scope.usingAssignPanel;
+	};
+	
+	$scope.selectAverageTag = function() {
+		var tagNames = [];
+		var tagWeights = [];
+		for(var idx = 0; idx < $scope.team.length; idx++) {
+			var team = $scope.team[idx];
+			if(team.tags === undefined) continue;
+			for(var tagIdx = 0; tagIdx < team.tags.length; tagIdx++) {
+				var tag = team.tags[tagIdx];
+				var existIdx = tagNames.indexOf(tag);
+				if(existIdx == -1) {
+					tagNames.push(tag);
+					tagWeights.push(team.weight[tagIdx]);
+				} else {
+					tagWeights[existIdx] += team.weight[tagIdx];
+				}
+			}
+		}
+		var allTags = [];
+		for(var idx = 0; idx < tagNames.length; idx++) {
+			var tagInfo = {
+					name: tagNames[idx],
+					weight: Math.round(tagWeights[idx] / $scope.team.length)
+			}
+			allTags.push(tagInfo);
+		}
+		$scope.selectedTags = allTags;
+	}
 	
 	$scope.getTeamMember = function(teamMembers) {
 		return getTeamMembersName(teamMembers, $scope.users);
@@ -161,17 +266,10 @@ angular.module('teamform-admin-app', ['firebase'])
 		window.location.href= "index.html";
 	};
 	
-	$scope.getMemberWeight = function(id) {
-		for(var idx = 0; idx < $scope.member.length; idx++) {
-			if($scope.member[idx].$id == id) return $scope.member[idx].weight;
-		}
-		return 0;
-	}
-	
 	$scope.getTotalWeight = function(teamMembers) {
 		var sum = 0;
 		for(var idx = 0; idx < teamMembers.length; idx++) {
-			sum += $scope.getMemberWeight(teamMembers[idx]);
+			sum += $scope.calculateMemberWeightWithTags(teamMembers[idx], $scope.selectedTags);
 		}
 		return sum;
 	}
@@ -194,9 +292,11 @@ angular.module('teamform-admin-app', ['firebase'])
 		for(var idx = 0; idx < $scope.member.length; idx++) {
 			if(!$scope.member[idx].inTeam) {
 				members.push($scope.member[idx]);
+				$scope.member[idx].weight = 
+					$scope.calculateMemberWeightWithTags($scope.member[idx].$id, $scope.selectedTags);
 			}
 		}
-		if(members.length < 1) return; // all members have a team
+		if(members.length < 1) return; // all members have a team)
 		
 		// sort all members with descending weight 
 		members.sort(function(a, b) {
